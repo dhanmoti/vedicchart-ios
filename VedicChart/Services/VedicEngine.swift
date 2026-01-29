@@ -45,6 +45,7 @@ class VedicEngine {
     
     init() {
         SwissEphemeris.shared
+        SwissEphemeris.shared.configureNodeType(.meanNode)
         configureSiderealMode()
     }
 
