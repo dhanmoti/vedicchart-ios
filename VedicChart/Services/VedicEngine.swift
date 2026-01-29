@@ -114,13 +114,15 @@ class VedicEngine {
     }
 
     private func calculateJulianDay(from date: Date) -> Double {
-        let calendar = Calendar.current
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .gmt
         let year = Int32(calendar.component(.year, from: date))
         let month = Int32(calendar.component(.month, from: date))
         let day = Int32(calendar.component(.day, from: date))
         let hour = Double(calendar.component(.hour, from: date))
         let minute = Double(calendar.component(.minute, from: date))
-        let decimalHour = hour + (minute / 60.0)
+        let second = Double(calendar.component(.second, from: date))
+        let decimalHour = hour + (minute / 60.0) + (second / 3600.0)
         var julianDay: Double = 0
         swe_date_conversion(year, month, day, decimalHour, CChar(Int32(SE_GREG_CAL)), &julianDay)
         return julianDay
