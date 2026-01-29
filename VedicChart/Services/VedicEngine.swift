@@ -42,6 +42,14 @@ struct VargaPosition {
 
 class VedicEngine {
     static let shared = VedicEngine()
+
+    struct VargaConfig {
+        /// When enabled, Rahu/Ketu longitudes are rounded to 0.01° before varga mapping.
+        /// Astroyogi appears to publish node positions at 0.01° precision, so this toggle
+        /// enables A/B comparisons against that external reference behavior.
+        static var shouldRoundRahuKetuForVargaMapping = false
+        static let rahuKetuVargaRoundingPrecision: Double = 0.01
+    }
     
     init() {
         SwissEphemeris.shared
@@ -285,7 +293,8 @@ class VedicEngine {
         var mappedPlanets: [Planet: Double] = [:]
 
         for (planet, longitude) in chart.planetLongitudes {
-            let position = VargaRules.mapPosition(longitude: longitude, varga: varga)
+            let adjustedLongitude = adjustLongitudeForVargaMapping(planet: planet, longitude: longitude)
+            let position = VargaRules.mapPosition(longitude: adjustedLongitude, varga: varga)
             mappedPlanets[planet] = position.longitude
         }
 
@@ -296,6 +305,14 @@ class VedicEngine {
             ascendantLongitude: ascendantPosition.longitude,
             planetLongitudes: mappedPlanets
         )
+    }
+
+    private func adjustLongitudeForVargaMapping(planet: Planet, longitude: Double) -> Double {
+        guard VargaConfig.shouldRoundRahuKetuForVargaMapping else { return longitude }
+        guard planet == .rahu || planet == .ketu else { return longitude }
+        let precision = VargaConfig.rahuKetuVargaRoundingPrecision
+        let rounded = (longitude / precision).rounded() * precision
+        return normalizeLongitude(rounded)
     }
 }
 
