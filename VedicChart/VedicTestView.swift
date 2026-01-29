@@ -32,16 +32,24 @@ struct VedicTestView: View {
     }
     
     func runDiagnostic() {
-        // 1. Define the testDate within this scope
-        let components = DateComponents(year: 1991, month: 11, day: 13, hour: 15, minute: 0)
-        guard let testDate = Calendar.current.date(from: components) else { return }
-        
         let engine = VedicEngine.shared
-        
-        // 2. Call the engine with the newly defined testDate
-        let chart = engine.generateD1Chart(date: testDate, lat: 1.3521, lon: 103.8198)
+        let rangoonTimeZone = TimeZone(secondsFromGMT: 6 * 3600 + 1800) ?? .current
+        let input = BirthInput(
+            year: 1991,
+            month: 11,
+            day: 13,
+            hour: 15,
+            minute: 0,
+            second: 0,
+            timeZone: rangoonTimeZone,
+            latitude: 16.8409,
+            longitude: 96.1735,
+            locationName: "Rangoon, Burma"
+        )
+        let chart = engine.generateD1Chart(input: input)
         
         var report = "--- RESULTS ---\n"
+        report += "Location: \(chart.locationName)\n"
         report += "Ascendant: \(String(format: "%.2f", chart.ascendantLongitude))°\n"
         report += "Asc Sign: \(chart.ascendantSignIndex) (0=Aries)\n\n"
         
