@@ -64,6 +64,9 @@ struct VedicTestView: View {
     private func formatChartReport(title: String, chart: ChartData) -> String {
         var report = "\(title)\n"
         report += "Location: \(chart.locationName)\n"
+        if let ayanamsa = chart.ayanamsa {
+            report += "Ayanamsa: \(ayanamsa.name) (\(String(format: "%.4f", ayanamsa.value))°)\n"
+        }
         report += "Ascendant: \(String(format: "%.2f", chart.ascendantLongitude))°\n"
         report += "Asc Sign: \(chart.ascendantSignIndex + 1) (1=Aries)\n\n"
 

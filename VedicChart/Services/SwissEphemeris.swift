@@ -21,9 +21,35 @@ enum NodeType {
     }
 }
 
+enum SiderealMode: CaseIterable {
+    case lahiri
+    case lahiri1940
+    case lahiriVp285
+    case lahiriIcrc
+
+    var sweCode: Int32 {
+        switch self {
+        case .lahiri:
+            return Int32(SE_SIDM_LAHIRI)
+        case .lahiri1940:
+            return Int32(SE_SIDM_LAHIRI_1940)
+        case .lahiriVp285:
+            return Int32(SE_SIDM_LAHIRI_VP285)
+        case .lahiriIcrc:
+            return Int32(SE_SIDM_LAHIRI_ICRC)
+        }
+    }
+}
+
+struct AyanamsaInfo: Codable {
+    let name: String
+    let value: Double
+}
+
 final class SwissEphemeris {
     static let shared = SwissEphemeris()
     private(set) var nodeType: NodeType = .trueNode
+    private(set) var siderealMode: SiderealMode = .lahiri
     private var isNodeTypeConfigured = false
 
     private init() {
@@ -44,6 +70,22 @@ final class SwissEphemeris {
         guard !isNodeTypeConfigured else { return }
         self.nodeType = nodeType
         isNodeTypeConfigured = true
+    }
+
+    func configureSiderealMode(_ mode: SiderealMode) {
+        siderealMode = mode
+        swe_set_sid_mode(mode.sweCode, 0, 0)
+    }
+
+    func ayanamsaInfo(julianDayET: Double) -> AyanamsaInfo? {
+        var value = Double(0)
+        var error = [Int8](repeating: 0, count: 256)
+        let ret = swe_get_ayanamsa_ex(julianDayET, 0, &value, &error)
+        guard ret >= 0 else {
+            return nil
+        }
+        let name = String(cString: swe_get_ayanamsa_name(siderealMode.sweCode))
+        return AyanamsaInfo(name: name, value: value)
     }
 }
 
@@ -73,8 +115,8 @@ enum SEPlanet {
     }
 }
 
-func configureSiderealMode() {
-    swe_set_sid_mode(Int32(SE_SIDM_LAHIRI), 0, 0)
+func configureSiderealMode(_ mode: SiderealMode) {
+    SwissEphemeris.shared.configureSiderealMode(mode)
 }
 
 func siderealLongitude(
