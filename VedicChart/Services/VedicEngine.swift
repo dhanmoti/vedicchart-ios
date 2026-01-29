@@ -14,6 +14,19 @@ enum VargaChart: Int, CaseIterable {
     case d40 = 40, d45 = 45, d60 = 60
 }
 
+struct BirthInput {
+    let year: Int
+    let month: Int
+    let day: Int
+    let hour: Int
+    let minute: Int
+    let second: Int
+    let timeZone: TimeZone
+    let latitude: Double
+    let longitude: Double
+    let locationName: String
+}
+
 struct VargaPosition {
     let signIndex: Int
     let degreeInSign: Double
@@ -44,6 +57,22 @@ class VedicEngine {
         return buildVargaChart(from: baseChart, varga: varga)
     }
 
+    func generateD1Chart(input: BirthInput) -> ChartData {
+        generateChart(input: input, varga: .d1)
+    }
+
+    func generateChart(input: BirthInput, varga: VargaChart) -> ChartData {
+        let date = makeDate(from: input)
+        let baseChart = generateBaseChart(
+            date: date,
+            lat: input.latitude,
+            lon: input.longitude,
+            locationName: input.locationName
+        )
+        guard varga != .d1 else { return baseChart }
+        return buildVargaChart(from: baseChart, varga: varga)
+    }
+
     func generateMoonChart(from chart: ChartData) -> ChartData {
         guard let moonLongitude = chart.planetLongitudes[.moon] else { return chart }
         return ChartData(
@@ -55,18 +84,33 @@ class VedicEngine {
         )
     }
 
-    private func generateBaseChart(date: Date, lat: Double, lon: Double) -> ChartData {
+    private func generateBaseChart(date: Date, lat: Double, lon: Double, locationName: String = "Calculated") -> ChartData {
         let julianDay = calculateJulianDay(from: date)
         let flags = Int32(SEFLG_SIDEREAL) | Int32(SEFLG_SPEED)
         let positions = calculatePlanetLongitudes(julianDay: julianDay, flags: flags)
         let ascendant = calculateAscendant(julianDay: julianDay, lat: lat, lon: lon, flags: flags)
         return ChartData(
             birthDate: date,
-            locationName: "Calculated",
+            locationName: locationName,
             coordinate: CodableCoordinate(latitude: lat, longitude: lon),
             ascendantLongitude: ascendant,
             planetLongitudes: positions
         )
+    }
+
+    private func makeDate(from input: BirthInput) -> Date {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = input.timeZone
+        let components = DateComponents(
+            timeZone: input.timeZone,
+            year: input.year,
+            month: input.month,
+            day: input.day,
+            hour: input.hour,
+            minute: input.minute,
+            second: input.second
+        )
+        return calendar.date(from: components) ?? Date()
     }
 
     private func calculateJulianDay(from date: Date) -> Double {
