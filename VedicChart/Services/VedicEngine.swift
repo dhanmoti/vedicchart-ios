@@ -75,7 +75,6 @@ class VedicEngine {
         let julianDay = calculateJulianDay(from: input)
         let baseChart = generateBaseChart(
             julianDayUT: julianDay.ut,
-            julianDayET: julianDay.et,
             date: date,
             lat: input.latitude,
             lon: input.longitude,
@@ -106,7 +105,6 @@ class VedicEngine {
         let julianDay = calculateJulianDay(from: date)
         return generateBaseChart(
             julianDayUT: julianDay.ut,
-            julianDayET: julianDay.et,
             date: date,
             lat: lat,
             lon: lon,
@@ -116,13 +114,12 @@ class VedicEngine {
 
     private func generateBaseChart(
         julianDayUT: Double,
-        julianDayET: Double,
         date: Date,
         lat: Double,
         lon: Double,
         locationName: String = "Calculated"
     ) -> ChartData {
-        let ayanamsa = SwissEphemeris.shared.ayanamsaInfo(julianDayET: julianDayET)
+        let ayanamsa = SwissEphemeris.shared.ayanamsaInfo(julianDayUT: julianDayUT)
         let positions = calculatePlanetLongitudes(julianDay: julianDayUT)
         let ascendant = calculateAscendant(julianDayUT: julianDayUT, lat: lat, lon: lon)
         return ChartData(

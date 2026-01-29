@@ -60,6 +60,34 @@ struct VedicChartTests {
             }
         }
     }
+
+    @Test("Lahiri ayanamsa matches Swiss Ephemeris reference epochs")
+    func lahiriAyanamsaMatchesReferenceEpochs() {
+        let ephemeris = SwissEphemeris.shared
+        defer { ephemeris.configureSiderealMode(.lahiri) }
+
+        let lahiriEpochET = 2435553.5
+        let lahiriExpected = 23.250182778 - 0.004658035
+        let lahiriValue = ayanamsaValue(julianDayET: lahiriEpochET, mode: .lahiri)
+        #expect(
+            lahiriValue != nil && abs((lahiriValue ?? 0) - lahiriExpected) < 0.0002,
+            "Expected Lahiri ayanamsa to match Swiss Ephemeris reference epoch."
+        )
+
+        let lahiriIcrcExpected = 23.25 - 0.00464207
+        let lahiriIcrcValue = ayanamsaValue(julianDayET: lahiriEpochET, mode: .lahiriIcrc)
+        #expect(
+            lahiriIcrcValue != nil && abs((lahiriIcrcValue ?? 0) - lahiriIcrcExpected) < 0.0002,
+            "Expected Lahiri ICRC ayanamsa to match Swiss Ephemeris reference epoch."
+        )
+    }
+}
+
+private func ayanamsaValue(julianDayET: Double, mode: SiderealMode) -> Double? {
+    SwissEphemeris.shared.configureSiderealMode(mode)
+    let deltaT = swe_deltat(julianDayET)
+    let julianDayUT = julianDayET - deltaT
+    return SwissEphemeris.shared.ayanamsaInfo(julianDayUT: julianDayUT)?.value
 }
 
 private struct StressTestRow {
