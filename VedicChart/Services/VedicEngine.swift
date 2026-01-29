@@ -60,7 +60,9 @@ class VedicEngine {
 
     func generateChart(input: BirthInput, varga: VargaChart) -> ChartData {
         let date = makeDate(from: input)
+        let julianDay = calculateJulianDay(from: input)
         let baseChart = generateBaseChart(
+            julianDay: julianDay,
             date: date,
             lat: input.latitude,
             lon: input.longitude,
@@ -88,6 +90,22 @@ class VedicEngine {
         locationName: String = "Calculated"
     ) -> ChartData {
         let julianDay = calculateJulianDay(from: date)
+        return generateBaseChart(
+            julianDay: julianDay,
+            date: date,
+            lat: lat,
+            lon: lon,
+            locationName: locationName
+        )
+    }
+
+    private func generateBaseChart(
+        julianDay: Double,
+        date: Date,
+        lat: Double,
+        lon: Double,
+        locationName: String = "Calculated"
+    ) -> ChartData {
         configureSiderealMode()
         let positions = calculatePlanetLongitudes(julianDay: julianDay)
         let ascendant = calculateAscendant(julianDay: julianDay, lat: lat, lon: lon)
@@ -121,13 +139,87 @@ class VedicEngine {
         let year = Int32(calendar.component(.year, from: date))
         let month = Int32(calendar.component(.month, from: date))
         let day = Int32(calendar.component(.day, from: date))
-        let hour = Double(calendar.component(.hour, from: date))
-        let minute = Double(calendar.component(.minute, from: date))
+        let hour = Int32(calendar.component(.hour, from: date))
+        let minute = Int32(calendar.component(.minute, from: date))
         let second = Double(calendar.component(.second, from: date))
-        let decimalHour = hour + (minute / 60.0) + (second / 3600.0)
-        var julianDay: Double = 0
-        swe_date_conversion(year, month, day, decimalHour, CChar(Int32(SE_GREG_CAL)), &julianDay)
-        return julianDay
+        return calculateJulianDayUTC(
+            year: year,
+            month: month,
+            day: day,
+            hour: hour,
+            minute: minute,
+            second: second
+        )
+    }
+
+    private func calculateJulianDay(from input: BirthInput) -> Double {
+        let timeZoneHours = Double(input.timeZone.secondsFromGMT()) / 3600.0
+        var utcYear = Int32(0)
+        var utcMonth = Int32(0)
+        var utcDay = Int32(0)
+        var utcHour = Int32(0)
+        var utcMinute = Int32(0)
+        var utcSecond = Double(0)
+        swe_utc_time_zone(
+            Int32(input.year),
+            Int32(input.month),
+            Int32(input.day),
+            Int32(input.hour),
+            Int32(input.minute),
+            Double(input.second),
+            timeZoneHours,
+            &utcYear,
+            &utcMonth,
+            &utcDay,
+            &utcHour,
+            &utcMinute,
+            &utcSecond
+        )
+        return calculateJulianDayUTC(
+            year: utcYear,
+            month: utcMonth,
+            day: utcDay,
+            hour: utcHour,
+            minute: utcMinute,
+            second: utcSecond
+        )
+    }
+
+    private func calculateJulianDayUTC(
+        year: Int32,
+        month: Int32,
+        day: Int32,
+        hour: Int32,
+        minute: Int32,
+        second: Double
+    ) -> Double {
+        var julianDayUT = Double(0)
+        var julianDayET = Double(0)
+        let result = swe_utc_to_jd(
+            year,
+            month,
+            day,
+            hour,
+            minute,
+            second,
+            Int32(SE_GREG_CAL),
+            &julianDayUT,
+            &julianDayET
+        )
+        if result < 0 {
+            var fallbackJulianDay: Double = 0
+            let decimalHour = Double(hour) + (Double(minute) / 60.0) + (second / 3600.0)
+            swe_date_conversion(
+                year,
+                month,
+                day,
+                decimalHour,
+                CChar(Int32(SE_GREG_CAL)),
+                &fallbackJulianDay
+            )
+            return fallbackJulianDay
+        }
+        return julianDayUT
     }
 
     private func calculatePlanetLongitudes(
