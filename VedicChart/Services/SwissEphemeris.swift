@@ -51,9 +51,11 @@ final class SwissEphemeris {
     private(set) var nodeType: NodeType = .trueNode
     private(set) var siderealMode: SiderealMode = .lahiri
     private var isNodeTypeConfigured = false
+    private var isSiderealModeConfigured = false
 
     private init() {
         setupEphemerisPath()
+        configureSiderealMode(.lahiri)
     }
 
     deinit {
@@ -75,6 +77,17 @@ final class SwissEphemeris {
     func configureSiderealMode(_ mode: SiderealMode) {
         siderealMode = mode
         swe_set_sid_mode(mode.sweCode, 0, 0)
+        isSiderealModeConfigured = true
+    }
+
+    func ensureSiderealModeConfigured() {
+        guard isSiderealModeConfigured else {
+            let message = "SwissEphemeris sidereal mode was not configured before sidereal calculations."
+            assertionFailure(message)
+            NSLog(message)
+            configureSiderealMode(siderealMode)
+            return
+        }
     }
 
     func ayanamsaInfo(julianDayET: Double) -> AyanamsaInfo? {
@@ -123,6 +136,7 @@ func siderealLongitude(
     julianDay: Double,
     planet: SEPlanet
 ) throws -> Double {
+    SwissEphemeris.shared.ensureSiderealModeConfigured()
     var result = [Double](repeating: 0.0, count: 6)
     var error = [Int8](repeating: 0, count: 256)
 
@@ -160,6 +174,7 @@ func ascendantLongitude(
     latitude: Double,
     longitude: Double
 ) throws -> Double {
+    SwissEphemeris.shared.ensureSiderealModeConfigured()
     var cusps = [Double](repeating: 0.0, count: 13)
     var ascmc = [Double](repeating: 0.0, count: 10)
 
