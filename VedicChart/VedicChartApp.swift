@@ -25,7 +25,7 @@ struct VedicChartApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            VedicTestView()
         }
         .modelContainer(sharedModelContainer)
     }
