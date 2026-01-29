@@ -348,21 +348,46 @@ struct VargaRules {
         case .d8:
             return offsetMapping(signIndex: signIndex, degreeInSign: degreeInSign, divisions: 8, evenOffset: 8)
         case .d9:
-            return signTypeMapping(signIndex: signIndex, degreeInSign: degreeInSign, divisions: 9, table: VargaTables.d9)
+            return signTypeOffsetMapping(
+                signIndex: signIndex,
+                degreeInSign: degreeInSign,
+                divisions: 9,
+                offsets: VargaOffsets.d9
+            )
         case .d10:
             return offsetMapping(signIndex: signIndex, degreeInSign: degreeInSign, divisions: 10, evenOffset: 8)
         case .d11:
-            return signTypeMapping(signIndex: signIndex, degreeInSign: degreeInSign, divisions: 11, table: VargaTables.d11)
+            return signTypeOffsetMapping(
+                signIndex: signIndex,
+                degreeInSign: degreeInSign,
+                divisions: 11,
+                offsets: VargaOffsets.d11
+            )
         case .d12:
             return offsetMapping(signIndex: signIndex, degreeInSign: degreeInSign, divisions: 12, evenOffset: 0)
         case .d16:
-            return signTypeMapping(signIndex: signIndex, degreeInSign: degreeInSign, divisions: 16, table: VargaTables.d16)
+            return signTypeOffsetMapping(
+                signIndex: signIndex,
+                degreeInSign: degreeInSign,
+                divisions: 16,
+                offsets: VargaOffsets.d16
+            )
         case .d20:
-            return signTypeMapping(signIndex: signIndex, degreeInSign: degreeInSign, divisions: 20, table: VargaTables.d20)
+            return signTypeOffsetMapping(
+                signIndex: signIndex,
+                degreeInSign: degreeInSign,
+                divisions: 20,
+                offsets: VargaOffsets.d20
+            )
         case .d24:
             return offsetMapping(signIndex: signIndex, degreeInSign: degreeInSign, divisions: 24, evenOffset: 3)
         case .d27:
-            return signTypeMapping(signIndex: signIndex, degreeInSign: degreeInSign, divisions: 27, table: VargaTables.d27)
+            return signTypeOffsetMapping(
+                signIndex: signIndex,
+                degreeInSign: degreeInSign,
+                divisions: 27,
+                offsets: VargaOffsets.d27
+            )
         case .d30:
             return trimsamsaMapping(signIndex: signIndex, degreeInSign: degreeInSign)
         case .d40:
@@ -408,17 +433,18 @@ struct VargaRules {
         return VargaPosition(signIndex: targetSign, degreeInSign: degree)
     }
 
-    private static func signTypeMapping(
+    private static func signTypeOffsetMapping(
         signIndex: Int,
         degreeInSign: Double,
         divisions: Int,
-        table: [SignType: [Int]]
+        offsets: [SignType: Int]
     ) -> VargaPosition {
         let divisionSize = 30.0 / Double(divisions)
         let divisionIndex = Int(floor(degreeInSign / divisionSize))
         let signType = signIndex.signType
-        let sequence = table[signType] ?? []
-        let targetSign = sequence.isEmpty ? signIndex : sequence[min(divisionIndex, sequence.count - 1)]
+        let startOffset = offsets[signType] ?? 0
+        let startIndex = (signIndex + startOffset) % 12
+        let targetSign = (startIndex + divisionIndex) % 12
         let degree = degreeInVargaSign(degreeInSign: degreeInSign, divisionSize: divisionSize)
         return VargaPosition(signIndex: targetSign, degreeInSign: degree)
     }
@@ -470,41 +496,43 @@ struct VargaRules {
     }
 }
 
+struct VargaOffsets {
+    static let d9: [SignType: Int] = [
+        .movable: 0,
+        .fixed: 8,
+        .dual: 4
+    ]
+
+    static let d11: [SignType: Int] = [
+        .movable: 0,
+        .fixed: 4,
+        .dual: 8
+    ]
+
+    static let d16: [SignType: Int] = [
+        .movable: 0,
+        .fixed: 4,
+        .dual: 8
+    ]
+
+    static let d20: [SignType: Int] = [
+        .movable: 0,
+        .fixed: 8,
+        .dual: 4
+    ]
+
+    static let d27: [SignType: Int] = [
+        .movable: 0,
+        .fixed: 4,
+        .dual: 8
+    ]
+}
+
 struct VargaTables {
     static let d5: [SignType: [Int]] = [
         .movable: [0, 1, 2, 3, 4],
         .fixed: [4, 3, 2, 1, 0],
         .dual: [8, 9, 10, 11, 0]
-    ]
-
-    static let d9: [SignType: [Int]] = [
-        .movable: sequence(startIndex: 0, count: 9),
-        .fixed: sequence(startIndex: 8, count: 9),
-        .dual: sequence(startIndex: 4, count: 9)
-    ]
-
-    static let d11: [SignType: [Int]] = [
-        .movable: sequence(startIndex: 0, count: 11),
-        .fixed: sequence(startIndex: 4, count: 11),
-        .dual: sequence(startIndex: 8, count: 11)
-    ]
-
-    static let d16: [SignType: [Int]] = [
-        .movable: sequence(startIndex: 0, count: 16),
-        .fixed: sequence(startIndex: 4, count: 16),
-        .dual: sequence(startIndex: 8, count: 16)
-    ]
-
-    static let d20: [SignType: [Int]] = [
-        .movable: sequence(startIndex: 0, count: 20),
-        .fixed: sequence(startIndex: 8, count: 20),
-        .dual: sequence(startIndex: 4, count: 20)
-    ]
-
-    static let d27: [SignType: [Int]] = [
-        .movable: sequence(startIndex: 0, count: 27),
-        .fixed: sequence(startIndex: 4, count: 27),
-        .dual: sequence(startIndex: 8, count: 27)
     ]
 
     static let d30Odd: [VargaSegment] = [
@@ -522,10 +550,6 @@ struct VargaTables {
         VargaSegment(size: 5.0, signIndex: 10),
         VargaSegment(size: 5.0, signIndex: 0)
     ]
-
-    private static func sequence(startIndex: Int, count: Int) -> [Int] {
-        (0..<count).map { (startIndex + $0) % 12 }
-    }
 }
 
 struct VargaSegment {
