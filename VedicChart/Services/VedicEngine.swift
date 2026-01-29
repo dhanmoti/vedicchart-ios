@@ -124,7 +124,7 @@ class VedicEngine {
     ) -> ChartData {
         configureSiderealMode()
         let positions = calculatePlanetLongitudes(julianDay: julianDayUT)
-        let ascendant = calculateAscendant(julianDayET: julianDayET, lat: lat, lon: lon)
+        let ascendant = calculateAscendant(julianDayUT: julianDayUT, lat: lat, lon: lon)
         return ChartData(
             birthDate: date,
             locationName: locationName,
@@ -273,13 +273,13 @@ class VedicEngine {
     }
 
     private func calculateAscendant(
-        julianDayET: Double,
+        julianDayUT: Double,
         lat: Double,
         lon: Double
     ) -> Double {
         do {
             let longitude = try ascendantLongitude(
-                julianDay: julianDayET,
+                julianDay: julianDayUT,
                 latitude: lat,
                 longitude: lon
             )
