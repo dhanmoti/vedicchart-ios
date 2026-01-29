@@ -140,7 +140,9 @@ func siderealLongitude(
     var result = [Double](repeating: 0.0, count: 6)
     var error = [Int8](repeating: 0, count: 256)
 
-    let flags = SEFLG_SWIEPH | SEFLG_SIDEREAL
+    // Lahiri ayanamsa is computed without nutation (mean, not true) so planets and houses
+    // stay consistent with Swiss Ephemeris' sidereal handling.
+    let flags = SEFLG_SWIEPH | SEFLG_SIDEREAL | SEFLG_NONUT
 
     let ret = swe_calc_ut(
         julianDay,
@@ -178,7 +180,8 @@ func ascendantLongitude(
     var cusps = [Double](repeating: 0.0, count: 13)
     var ascmc = [Double](repeating: 0.0, count: 10)
 
-    let flags = SEFLG_SIDEREAL
+    // Match planet flags (Swiss Ephemeris sidereal = mean Lahiri, no nutation).
+    let flags = SEFLG_SWIEPH | SEFLG_SIDEREAL | SEFLG_NONUT
     let ret = swe_houses_ex(
         julianDay,
         Int32(flags),
