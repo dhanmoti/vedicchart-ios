@@ -136,7 +136,7 @@ private struct StressTestRow {
         return (year, month, day)
     }
 
-    private static func parseTime(_ value: String) -> (hour: Int, minute: Int, second: Int) ? {
+    private static func parseTime(_ value: String) -> (hour: Int, minute: Int, second: Int)? {
         let parts = value.split(separator: ":")
         guard parts.count >= 2,
               let hour = Int(parts[0]),
