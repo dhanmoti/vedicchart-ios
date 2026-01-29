@@ -16,6 +16,7 @@ struct ChartData: Identifiable, Codable {
     let coordinate: CodableCoordinate
     let ascendantLongitude: Double
     let planetLongitudes: [Planet: Double] // Standardize to this name
+    let ayanamsa: AyanamsaInfo?
     
     var ascendantSignIndex: Int {
         Int(floor(ascendantLongitude / 30.0))

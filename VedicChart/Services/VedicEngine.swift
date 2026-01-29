@@ -50,11 +50,15 @@ class VedicEngine {
         static var shouldRoundRahuKetuForVargaMapping = false
         static let rahuKetuVargaRoundingPrecision: Double = 0.01
     }
+
+    struct SiderealConfig {
+        static var mode: SiderealMode = .lahiri
+    }
     
     init() {
         SwissEphemeris.shared
         SwissEphemeris.shared.configureNodeType(.meanNode)
-        configureSiderealMode()
+        configureSiderealMode(SiderealConfig.mode)
     }
 
     func generateD1Chart(date: Date, lat: Double, lon: Double) -> ChartData {
@@ -93,7 +97,8 @@ class VedicEngine {
             locationName: chart.locationName,
             coordinate: chart.coordinate,
             ascendantLongitude: moonLongitude,
-            planetLongitudes: chart.planetLongitudes
+            planetLongitudes: chart.planetLongitudes,
+            ayanamsa: chart.ayanamsa
         )
     }
 
@@ -122,7 +127,8 @@ class VedicEngine {
         lon: Double,
         locationName: String = "Calculated"
     ) -> ChartData {
-        configureSiderealMode()
+        configureSiderealMode(SiderealConfig.mode)
+        let ayanamsa = SwissEphemeris.shared.ayanamsaInfo(julianDayET: julianDayET)
         let positions = calculatePlanetLongitudes(julianDay: julianDayUT)
         let ascendant = calculateAscendant(julianDayUT: julianDayUT, lat: lat, lon: lon)
         return ChartData(
@@ -130,7 +136,8 @@ class VedicEngine {
             locationName: locationName,
             coordinate: CodableCoordinate(latitude: lat, longitude: lon),
             ascendantLongitude: ascendant,
-            planetLongitudes: positions
+            planetLongitudes: positions,
+            ayanamsa: ayanamsa
         )
     }
 
@@ -312,7 +319,8 @@ class VedicEngine {
             locationName: chart.locationName,
             coordinate: chart.coordinate,
             ascendantLongitude: ascendantPosition.longitude,
-            planetLongitudes: mappedPlanets
+            planetLongitudes: mappedPlanets,
+            ayanamsa: chart.ayanamsa
         )
     }
 
