@@ -90,10 +90,10 @@ final class SwissEphemeris {
         }
     }
 
-    func ayanamsaInfo(julianDayET: Double) -> AyanamsaInfo? {
+    func ayanamsaInfo(julianDayUT: Double) -> AyanamsaInfo? {
         var value = Double(0)
         var error = [Int8](repeating: 0, count: 256)
-        let ret = swe_get_ayanamsa_ex(julianDayET, 0, &value, &error)
+        let ret = swe_get_ayanamsa_ex_ut(julianDayUT, 0, &value, &error)
         guard ret >= 0 else {
             return nil
         }
