@@ -40,11 +40,8 @@ class VedicEngine {
     static let shared = VedicEngine()
     
     init() {
-        if let path = Bundle.main.resourcePath {
-            swe_set_ephe_path(path)
-        }
-        
-        swe_set_sid_mode(Int32(SE_SIDM_LAHIRI), 0, 0)
+        SwissEphemeris.shared
+        configureSiderealMode()
     }
 
     func generateD1Chart(date: Date, lat: Double, lon: Double) -> ChartData {
@@ -91,9 +88,9 @@ class VedicEngine {
         locationName: String = "Calculated"
     ) -> ChartData {
         let julianDay = calculateJulianDay(from: date)
-        let flags = Int32(SEFLG_SWIEPH) | Int32(SEFLG_SPEED) | Int32(SEFLG_SIDEREAL)
-        let positions = calculatePlanetLongitudes(julianDay: julianDay, flags: flags)
-        let ascendant = calculateAscendant(julianDay: julianDay, lat: lat, lon: lon, flags: flags)
+        configureSiderealMode()
+        let positions = calculatePlanetLongitudes(julianDay: julianDay)
+        let ascendant = calculateAscendant(julianDay: julianDay, lat: lat, lon: lon)
         return ChartData(
             birthDate: date,
             locationName: locationName,
@@ -134,25 +131,28 @@ class VedicEngine {
     }
 
     private func calculatePlanetLongitudes(
-        julianDay: Double,
-        flags: Int32
+        julianDay: Double
     ) -> [Planet: Double] {
         var positions = [Planet: Double]()
-        let planetMap: [Planet: Int32] = [
-            .sun: Int32(SE_SUN), .moon: Int32(SE_MOON), .mars: Int32(SE_MARS),
-            .mercury: Int32(SE_MERCURY), .jupiter: Int32(SE_JUPITER),
-            .venus: Int32(SE_VENUS), .saturn: Int32(SE_SATURN), .rahu: Int32(SE_MEAN_NODE)
+        let planetMap: [Planet: SEPlanet] = [
+            .sun: .sun,
+            .moon: .moon,
+            .mars: .mars,
+            .mercury: .mercury,
+            .jupiter: .jupiter,
+            .venus: .venus,
+            .saturn: .saturn,
+            .rahu: .rahu,
+            .ketu: .ketu
         ]
-        var xx = [Double](repeating: 0.0, count: 6)
-        var serr = [Int8](repeating: 0, count: 256)
 
-        for (planet, seId) in planetMap {
-            swe_calc_ut(julianDay, seId, flags, &xx, &serr)
-            positions[planet] = normalizeLongitude(xx[0])
-        }
-
-        if let rahuLon = positions[.rahu] {
-            positions[.ketu] = normalizeLongitude(rahuLon + 180.0)
+        for (planet, sePlanet) in planetMap {
+            do {
+                let longitude = try siderealLongitude(julianDay: julianDay, planet: sePlanet)
+                positions[planet] = normalizeLongitude(longitude)
+            } catch {
+                positions[planet] = 0.0
+            }
         }
 
         return positions
@@ -161,13 +161,18 @@ class VedicEngine {
     private func calculateAscendant(
         julianDay: Double,
         lat: Double,
-        lon: Double,
-        flags: Int32
+        lon: Double
     ) -> Double {
-        var cusps = [Double](repeating: 0.0, count: 13)
-        var ascmc = [Double](repeating: 0.0, count: 10)
-        swe_houses_ex(julianDay, flags, lat, lon, Int32(UnicodeScalar("W").value), &cusps, &ascmc)
-        return normalizeLongitude(ascmc[0])
+        do {
+            let longitude = try ascendantLongitude(
+                julianDay: julianDay,
+                latitude: lat,
+                longitude: lon
+            )
+            return normalizeLongitude(longitude)
+        } catch {
+            return 0.0
+        }
     }
 
     private func normalizeLongitude(_ longitude: Double) -> Double {
