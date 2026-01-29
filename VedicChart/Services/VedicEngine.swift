@@ -84,11 +84,17 @@ class VedicEngine {
         )
     }
 
-    private func generateBaseChart(date: Date, lat: Double, lon: Double, locationName: String = "Calculated") -> ChartData {
+    private func generateBaseChart(
+        date: Date,
+        lat: Double,
+        lon: Double,
+        locationName: String = "Calculated"
+    ) -> ChartData {
         let julianDay = calculateJulianDay(from: date)
-        let flags = Int32(SEFLG_SIDEREAL) | Int32(SEFLG_SPEED)
-        let positions = calculatePlanetLongitudes(julianDay: julianDay, flags: flags)
-        let ascendant = calculateAscendant(julianDay: julianDay, lat: lat, lon: lon, flags: flags)
+        let flags = Int32(SEFLG_SWIEPH) | Int32(SEFLG_SPEED)
+        let ayanamsa = calculateAyanamsa(julianDay: julianDay)
+        let positions = calculatePlanetLongitudes(julianDay: julianDay, flags: flags, ayanamsa: ayanamsa)
+        let ascendant = calculateAscendant(julianDay: julianDay, lat: lat, lon: lon, ayanamsa: ayanamsa)
         return ChartData(
             birthDate: date,
             locationName: locationName,
@@ -128,7 +134,11 @@ class VedicEngine {
         return julianDay
     }
 
-    private func calculatePlanetLongitudes(julianDay: Double, flags: Int32) -> [Planet: Double] {
+    private func calculatePlanetLongitudes(
+        julianDay: Double,
+        flags: Int32,
+        ayanamsa: Double
+    ) -> [Planet: Double] {
         var positions = [Planet: Double]()
         let planetMap: [Planet: Int32] = [
             .sun: Int32(SE_SUN), .moon: Int32(SE_MOON), .mars: Int32(SE_MARS),
@@ -140,21 +150,38 @@ class VedicEngine {
 
         for (planet, seId) in planetMap {
             swe_calc_ut(julianDay, seId, flags, &xx, &serr)
-            positions[planet] = xx[0]
+            positions[planet] = normalizeLongitude(xx[0] - ayanamsa)
         }
 
         if let rahuLon = positions[.rahu] {
-            positions[.ketu] = (rahuLon + 180.0).truncatingRemainder(dividingBy: 360.0)
+            positions[.ketu] = normalizeLongitude(rahuLon + 180.0)
         }
 
         return positions
     }
 
-    private func calculateAscendant(julianDay: Double, lat: Double, lon: Double, flags: Int32) -> Double {
+    private func calculateAscendant(
+        julianDay: Double,
+        lat: Double,
+        lon: Double,
+        ayanamsa: Double
+    ) -> Double {
         var cusps = [Double](repeating: 0.0, count: 13)
         var ascmc = [Double](repeating: 0.0, count: 10)
-        swe_houses_ex(julianDay, flags, lat, lon, Int32(UnicodeScalar("W").value), &cusps, &ascmc)
-        return ascmc[0]
+        swe_houses_ex(julianDay, Int32(SEFLG_SWIEPH), lat, lon, Int32(UnicodeScalar("W").value), &cusps, &ascmc)
+        return normalizeLongitude(ascmc[0] - ayanamsa)
+    }
+
+    private func calculateAyanamsa(julianDay: Double) -> Double {
+        swe_get_ayanamsa_ut(julianDay)
+    }
+
+    private func normalizeLongitude(_ longitude: Double) -> Double {
+        var normalized = longitude.truncatingRemainder(dividingBy: 360.0)
+        if normalized < 0 {
+            normalized += 360.0
+        }
+        return normalized
     }
 
     private func buildVargaChart(from chart: ChartData, varga: VargaChart) -> ChartData {
