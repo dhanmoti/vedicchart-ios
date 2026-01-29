@@ -24,7 +24,7 @@ struct ChartData: Identifiable, Codable {
     // Add this member to fix the "no member getHouse" error
     func getHouse(for planet: Planet) -> Int {
         guard let lon = planetLongitudes[planet] else { return 1 }
-        let planetSignIndex = Int(floor(lon / 30.0))
-        return ((planetSignIndex - ascendantSignIndex + 12) % 12) + 1
+        let delta = (lon - ascendantLongitude + 360.0).truncatingRemainder(dividingBy: 360.0)
+        return Int(floor(delta / 30.0)) + 1
     }
 }
