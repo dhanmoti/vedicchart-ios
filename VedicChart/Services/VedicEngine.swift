@@ -75,7 +75,8 @@ class VedicEngine {
         let date = makeDate(from: input)
         let julianDay = calculateJulianDay(from: input)
         let baseChart = generateBaseChart(
-            julianDay: julianDay,
+            julianDayUT: julianDay.ut,
+            julianDayET: julianDay.et,
             date: date,
             lat: input.latitude,
             lon: input.longitude,
@@ -104,7 +105,8 @@ class VedicEngine {
     ) -> ChartData {
         let julianDay = calculateJulianDay(from: date)
         return generateBaseChart(
-            julianDay: julianDay,
+            julianDayUT: julianDay.ut,
+            julianDayET: julianDay.et,
             date: date,
             lat: lat,
             lon: lon,
@@ -113,15 +115,16 @@ class VedicEngine {
     }
 
     private func generateBaseChart(
-        julianDay: Double,
+        julianDayUT: Double,
+        julianDayET: Double,
         date: Date,
         lat: Double,
         lon: Double,
         locationName: String = "Calculated"
     ) -> ChartData {
         configureSiderealMode()
-        let positions = calculatePlanetLongitudes(julianDay: julianDay)
-        let ascendant = calculateAscendant(julianDay: julianDay, lat: lat, lon: lon)
+        let positions = calculatePlanetLongitudes(julianDay: julianDayUT)
+        let ascendant = calculateAscendant(julianDayET: julianDayET, lat: lat, lon: lon)
         return ChartData(
             birthDate: date,
             locationName: locationName,
@@ -146,7 +149,12 @@ class VedicEngine {
         return calendar.date(from: components) ?? Date()
     }
 
-    private func calculateJulianDay(from date: Date) -> Double {
+    private struct JulianDayValues {
+        let ut: Double
+        let et: Double
+    }
+
+    private func calculateJulianDay(from date: Date) -> JulianDayValues {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .gmt
         let year = Int32(calendar.component(.year, from: date))
@@ -165,7 +173,7 @@ class VedicEngine {
         )
     }
 
-    private func calculateJulianDay(from input: BirthInput) -> Double {
+    private func calculateJulianDay(from input: BirthInput) -> JulianDayValues {
         let timeZoneHours = Double(input.timeZone.secondsFromGMT()) / 3600.0
         var utcYear = Int32(0)
         var utcMonth = Int32(0)
@@ -205,7 +213,7 @@ class VedicEngine {
         hour: Int32,
         minute: Int32,
         second: Double
-    ) -> Double {
+    ) -> JulianDayValues {
         var julianDayUT = Double(0)
         var julianDayET = Double(0)
         let result = swe_utc_to_jd(
@@ -230,9 +238,10 @@ class VedicEngine {
                 CChar(Int32(SE_GREG_CAL)),
                 &fallbackJulianDay
             )
-            return fallbackJulianDay
+            let fallbackDeltaT = swe_deltat(fallbackJulianDay)
+            return JulianDayValues(ut: fallbackJulianDay, et: fallbackJulianDay + fallbackDeltaT)
         }
-        return julianDayUT
+        return JulianDayValues(ut: julianDayUT, et: julianDayET)
     }
 
     private func calculatePlanetLongitudes(
@@ -264,13 +273,13 @@ class VedicEngine {
     }
 
     private func calculateAscendant(
-        julianDay: Double,
+        julianDayET: Double,
         lat: Double,
         lon: Double
     ) -> Double {
         do {
             let longitude = try ascendantLongitude(
-                julianDay: julianDay,
+                julianDay: julianDayET,
                 latitude: lat,
                 longitude: lon
             )
