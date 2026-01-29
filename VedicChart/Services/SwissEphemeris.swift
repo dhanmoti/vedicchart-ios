@@ -7,8 +7,24 @@
 
 import Foundation
 
+enum NodeType {
+    case trueNode
+    case meanNode
+
+    var sweCode: Int32 {
+        switch self {
+        case .trueNode:
+            return Int32(SE_TRUE_NODE)
+        case .meanNode:
+            return Int32(SE_MEAN_NODE)
+        }
+    }
+}
+
 final class SwissEphemeris {
     static let shared = SwissEphemeris()
+    private(set) var nodeType: NodeType = .trueNode
+    private var isNodeTypeConfigured = false
 
     private init() {
         setupEphemerisPath()
@@ -23,6 +39,12 @@ final class SwissEphemeris {
             swe_set_ephe_path(path)
         }
     }
+
+    func configureNodeType(_ nodeType: NodeType) {
+        guard !isNodeTypeConfigured else { return }
+        self.nodeType = nodeType
+        isNodeTypeConfigured = true
+    }
 }
 
 enum SEPlanet {
@@ -36,7 +58,7 @@ enum SEPlanet {
     case rahu
     case ketu
 
-    var sweCode: Int32 {
+    func sweCode(nodeType: NodeType) -> Int32 {
         switch self {
         case .sun: return Int32(SE_SUN)
         case .moon: return Int32(SE_MOON)
@@ -45,8 +67,8 @@ enum SEPlanet {
         case .jupiter: return Int32(SE_JUPITER)
         case .venus: return Int32(SE_VENUS)
         case .saturn: return Int32(SE_SATURN)
-        case .rahu: return Int32(SE_TRUE_NODE)
-        case .ketu: return Int32(SE_TRUE_NODE)
+        case .rahu: return nodeType.sweCode
+        case .ketu: return nodeType.sweCode
         }
     }
 }
@@ -66,7 +88,7 @@ func siderealLongitude(
 
     let ret = swe_calc_ut(
         julianDay,
-        planet.sweCode,
+        planet.sweCode(nodeType: SwissEphemeris.shared.nodeType),
         Int32(flags),
         &result,
         &error
