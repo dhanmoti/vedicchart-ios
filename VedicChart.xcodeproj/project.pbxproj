@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		3D9A2E6B2F3E123400ABC001 /* PythonKit in Frameworks */ = {isa = PBXBuildFile; productRef = 3D9A2E6C2F3E123400ABC002 /* PythonKit */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		3DE475C62F2AFBE80036EC3B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -66,6 +70,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3D9A2E6B2F3E123400ABC001 /* PythonKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -126,6 +131,7 @@
 			);
 			name = VedicChart;
 			packageProductDependencies = (
+				3D9A2E6C2F3E123400ABC002 /* PythonKit */,
 			);
 			productName = VedicChart;
 			productReference = 3DE475B42F2AFBE70036EC3B /* VedicChart.app */;
@@ -210,6 +216,9 @@
 			);
 			mainGroup = 3DE475AB2F2AFBE70036EC3B;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				3D9A2E6D2F3E123400ABC003 /* XCRemoteSwiftPackageReference "PythonKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3DE475B52F2AFBE70036EC3B /* Products */;
 			projectDirPath = "";
@@ -282,6 +291,25 @@
 			targetProxy = 3DE475D02F2AFBE80036EC3B /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		3D9A2E6D2F3E123400ABC003 /* XCRemoteSwiftPackageReference "PythonKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pvieito/PythonKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.4.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		3D9A2E6C2F3E123400ABC002 /* PythonKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3D9A2E6D2F3E123400ABC003 /* XCRemoteSwiftPackageReference "PythonKit" */;
+			productName = PythonKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCBuildConfiguration section */
 		3DE475D92F2AFBE80036EC3B /* Debug */ = {
