@@ -51,14 +51,9 @@ class VedicEngine {
         static let rahuKetuVargaRoundingPrecision: Double = 0.01
     }
 
-    struct SiderealConfig {
-        static var mode: SiderealMode = .lahiri
-    }
-    
     init() {
         SwissEphemeris.shared
         SwissEphemeris.shared.configureNodeType(.meanNode)
-        configureSiderealMode(SiderealConfig.mode)
     }
 
     func generateD1Chart(date: Date, lat: Double, lon: Double) -> ChartData {
@@ -127,7 +122,6 @@ class VedicEngine {
         lon: Double,
         locationName: String = "Calculated"
     ) -> ChartData {
-        configureSiderealMode(SiderealConfig.mode)
         let ayanamsa = SwissEphemeris.shared.ayanamsaInfo(julianDayET: julianDayET)
         let positions = calculatePlanetLongitudes(julianDay: julianDayUT)
         let ascendant = calculateAscendant(julianDayUT: julianDayUT, lat: lat, lon: lon)
