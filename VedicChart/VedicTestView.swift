@@ -46,24 +46,36 @@ struct VedicTestView: View {
             longitude: 96.1735,
             locationName: "Rangoon, Burma"
         )
-        let chart = engine.generateD1Chart(input: input)
-        
+        let charts = VargaChart.allCases.map { varga in
+            (varga, engine.generateChart(input: input, varga: varga))
+        }
+
         var report = "--- RESULTS ---\n"
+        for (index, entry) in charts.enumerated() {
+            report += formatChartReport(title: "\(entry.0.displayName) Chart", chart: entry.1)
+            if index < charts.count - 1 {
+                report += "\n\n"
+            }
+        }
+
+        self.output = report
+    }
+
+    private func formatChartReport(title: String, chart: ChartData) -> String {
+        var report = "\(title)\n"
         report += "Location: \(chart.locationName)\n"
         report += "Ascendant: \(String(format: "%.2f", chart.ascendantLongitude))°\n"
         report += "Asc Sign: \(chart.ascendantSignIndex + 1) (1=Aries)\n\n"
-        
+
         report += "Planet      | Deg        | House\n"
         report += "-------------------------------\n"
-        
+
         for planet in Planet.allCases {
             let lon = chart.planetLongitudes[planet] ?? 0
             let house = chart.getHouse(for: planet)
-            
-            // Use %@ for Swift Strings to avoid format specifier mismatches
             report += String(format: "%-11@ | %-10.2f | %-5d\n", planet.rawValue, lon, house)
         }
-        
-        self.output = report
+
+        return report
     }
 }

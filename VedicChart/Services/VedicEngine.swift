@@ -12,6 +12,10 @@ enum VargaChart: Int, CaseIterable {
     case d1 = 1, d2 = 2, d3 = 3, d4 = 4, d5 = 5, d6 = 6, d7 = 7, d8 = 8, d9 = 9, d10 = 10
     case d11 = 11, d12 = 12, d16 = 16, d20 = 20, d24 = 24, d27 = 27, d30 = 30
     case d40 = 40, d45 = 45, d60 = 60
+
+    var displayName: String {
+        "D\(rawValue)"
+    }
 }
 
 struct BirthInput {
