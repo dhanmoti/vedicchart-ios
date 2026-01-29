@@ -91,10 +91,9 @@ class VedicEngine {
         locationName: String = "Calculated"
     ) -> ChartData {
         let julianDay = calculateJulianDay(from: date)
-        let flags = Int32(SEFLG_SWIEPH) | Int32(SEFLG_SPEED)
-        let ayanamsa = calculateAyanamsa(julianDay: julianDay)
-        let positions = calculatePlanetLongitudes(julianDay: julianDay, flags: flags, ayanamsa: ayanamsa)
-        let ascendant = calculateAscendant(julianDay: julianDay, lat: lat, lon: lon, ayanamsa: ayanamsa)
+        let flags = Int32(SEFLG_SWIEPH) | Int32(SEFLG_SPEED) | Int32(SEFLG_SIDEREAL)
+        let positions = calculatePlanetLongitudes(julianDay: julianDay, flags: flags)
+        let ascendant = calculateAscendant(julianDay: julianDay, lat: lat, lon: lon, flags: flags)
         return ChartData(
             birthDate: date,
             locationName: locationName,
@@ -136,8 +135,7 @@ class VedicEngine {
 
     private func calculatePlanetLongitudes(
         julianDay: Double,
-        flags: Int32,
-        ayanamsa: Double
+        flags: Int32
     ) -> [Planet: Double] {
         var positions = [Planet: Double]()
         let planetMap: [Planet: Int32] = [
@@ -150,7 +148,7 @@ class VedicEngine {
 
         for (planet, seId) in planetMap {
             swe_calc_ut(julianDay, seId, flags, &xx, &serr)
-            positions[planet] = normalizeLongitude(xx[0] - ayanamsa)
+            positions[planet] = normalizeLongitude(xx[0])
         }
 
         if let rahuLon = positions[.rahu] {
@@ -164,16 +162,12 @@ class VedicEngine {
         julianDay: Double,
         lat: Double,
         lon: Double,
-        ayanamsa: Double
+        flags: Int32
     ) -> Double {
         var cusps = [Double](repeating: 0.0, count: 13)
         var ascmc = [Double](repeating: 0.0, count: 10)
-        swe_houses_ex(julianDay, Int32(SEFLG_SWIEPH), lat, lon, Int32(UnicodeScalar("W").value), &cusps, &ascmc)
-        return normalizeLongitude(ascmc[0] - ayanamsa)
-    }
-
-    private func calculateAyanamsa(julianDay: Double) -> Double {
-        swe_get_ayanamsa_ut(julianDay)
+        swe_houses_ex(julianDay, flags, lat, lon, Int32(UnicodeScalar("W").value), &cusps, &ascmc)
+        return normalizeLongitude(ascmc[0])
     }
 
     private func normalizeLongitude(_ longitude: Double) -> Double {

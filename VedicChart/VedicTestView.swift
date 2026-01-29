@@ -51,7 +51,7 @@ struct VedicTestView: View {
         var report = "--- RESULTS ---\n"
         report += "Location: \(chart.locationName)\n"
         report += "Ascendant: \(String(format: "%.2f", chart.ascendantLongitude))°\n"
-        report += "Asc Sign: \(chart.ascendantSignIndex) (0=Aries)\n\n"
+        report += "Asc Sign: \(chart.ascendantSignIndex + 1) (1=Aries)\n\n"
         
         report += "Planet      | Deg        | House\n"
         report += "-------------------------------\n"
