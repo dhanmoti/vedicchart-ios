@@ -64,7 +64,7 @@ func siderealLongitude(
 
     let flags = SEFLG_SWIEPH | SEFLG_SIDEREAL
 
-    let ret = swe_calc(
+    let ret = swe_calc_ut(
         julianDay,
         planet.sweCode,
         Int32(flags),
@@ -99,8 +99,10 @@ func ascendantLongitude(
     var cusps = [Double](repeating: 0.0, count: 13)
     var ascmc = [Double](repeating: 0.0, count: 10)
 
-    let ret = swe_houses(
+    let flags = SEFLG_SIDEREAL
+    let ret = swe_houses_ex(
         julianDay,
+        Int32(flags),
         latitude,
         longitude,
         Int32("P".utf8.first!),
